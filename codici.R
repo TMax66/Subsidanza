@@ -1,23 +1,75 @@
 library(readxl)
 library(tidyverse)
+library(nnet)   
+library(brms)
+library(bayesplot)
+library(sjPlot)
+library(lme4)
 
-dt <- read_excel("subsidenza.xlsx")  
+dati <- read_excel("subsidenza.xlsx")  
 
-#dt<-dt %>% 
-#  mutate(diffvet=op1-op2)
 
-dt<-dt %>% 
+dt<-dati %>% 
   pivot_longer(3:4, names_to = "Operatore", values_to = "grade") %>% 
   mutate(Operatore=factor(Operatore), 
          tecnica=factor(tecnica),
          id=factor(id))
 
-summary(lme4::lmer(grade~tecnica+Operatore+(1|id), data=dt))
+dt %>% 
+  group_by(tecnica) %>% 
+  summarise(m=mean(grade))
+  
+
+mod<-lmer(grade~tecnica+Operatore+(1|id), data=dt)
+
+anova(mod)
+###scomposizione varianza=518+127+2.63+13.77###
+
+
+p<-plot_model(mod, type="re", colors = c("blue", "blue"))
+
+pp<-p[["data"]]
+
+datit %>%
+  full_join(pp, by = c("id" = "term")) %>% 
+  mutate(dogs= factor(id)) %>% 
+  ggplot(aes(x = estimate, y=dogs, label=p.label))+
+  geom_point(aes(color=tecnica), size=2.8)+ scale_color_manual(values=c("blue", "red"))+
+  geom_segment(aes(x = conf.low, xend = conf.high, y=dogs, yend=dogs,
+                   color=tecnica))+theme_sjplot()+
+  vline_0(color="grey3")+labs(title="random effect", x="diff", y="")+
+  geom_text(vjust=-1)
 
 
 
 
-#####guarigione#####  
+
+
+
+
+
+
+
+tab_model(mod, file="m.html")
+
+
+plot_model(mod, type = "resid")
+
+
+library(sjmisc)
+
+
+
+
+
+
+
+
+
+
+
+
+      #####guarigione#####  
 
 d<-tibble(treatment=c(rep("PD", 12),rep("DS",13)), 
           outcome=c(c(rep("M",5 ),rep("S",3), rep("P",4)),
@@ -27,8 +79,6 @@ library(nnet)
 
 m<-multinom(outcome~treatment, data=d)          
 
-library(brms)
-library(bayesplot)
 fit <- brm(
   formula= outcome~treatment, data=d,
   family= categorical (link="logit"))

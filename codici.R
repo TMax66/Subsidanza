@@ -5,29 +5,41 @@ library(brms)
 library(bayesplot)
 library(sjPlot)
 library(lme4)
-library(VCA)
+library(broom)
+library(afex)
+library(patchwork)
 
 dati <- read_excel("subsidenza.xlsx")  
 
 
 dt<-dati %>% 
-  pivot_longer(3:4, names_to = "Operatore", values_to = "grade") %>% 
-  mutate(Operatore=factor(Operatore), 
-         tecnica=factor(tecnica, levels = c("PD","DS")),
-         id=factor(id)) %>% 
+  pivot_longer(3:4, names_to = "Observer", values_to = "Subsidence") %>% 
+  mutate(Observer=factor(Observer), 
+         Treatment=factor(tecnica, levels = c("PD","DS")),
+         IDdog=factor(id)) %>% 
+  select(-tecnica, -id) %>% 
   data.frame()
 
-dt %>% 
-  group_by(tecnica) %>% 
-  summarise(m=mean(grade))
+# dt %>% 
+#   group_by(tecnica) %>% 
+#   summarise(m=mean(grade))
   
 
-mod<-lmer(grade~tecnica+Operatore+(1|id), data=dt)
+mod<-lmer(Subsidence~Treatment+Observer+(1|IDdog), data=dt)
+mod<-mixed(Subsidence~Treatment+Observer+(1|IDdog), data=dt)
+
 anova(mod)
 ###scomposizione varianza=518+127+2.63+13.77###
 
+tab_model(mod, show.intercept = FALSE, file="sub.html")
 
-p<-plot_model(mod, type="re", colors = c("blue", "blue"))
+tidy(mod)
+
+p<-plot_model(mod, type="re", colors = c("steelblue2", "steelblue2"))
+p2<-plot_model(mod, type="est", colors=c("steelblue2", "steelblue2"))
+
+p+p2
+
 
 pp<-p[["data"]]
 

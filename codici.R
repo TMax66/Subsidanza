@@ -59,6 +59,8 @@ plot_model(mod, type = "resid")
 d30<-tibble(treatment=c(rep("PD", 12),rep("DS",13)), 
           outcome=c(c(rep("M",5 ),rep("S",3), rep("P",4)),
                     c(rep("M",11),rep("S",1), rep("P",1))))
+
+write.table(d30, file="d30.csv")
                     
 library(nnet)         
 

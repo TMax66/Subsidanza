@@ -8,6 +8,7 @@ library(lme4)
 library(broom)
 library(afex)
 library(patchwork)
+library(ggstatsplot)
 
 dati <- read_excel("subsidenza.xlsx")  
 
@@ -67,16 +68,60 @@ plot_model(mod, type = "resid")
 ##############################
 
 #####Guarigione  a 30 gg#####  
-
 d30<-tibble(treatment=c(rep("PD", 12),rep("DS",13)), 
-          outcome=c(c(rep("M",5 ),rep("S",3), rep("P",4)),
-                    c(rep("M",11),rep("S",1), rep("P",1))))
+          outcome=c(c(rep("Improvment",5 ),rep("Stationary",3), rep("Worsening",4)),
+                    c(rep("Improvment",11),rep("Stationary",1), rep("Worsening",1))))
 
-write.table(d30, file="d30.csv")
-                    
-library(nnet)         
+####Guarigione a 90 giorni###
+d90<-tibble(treatment=c(rep("PD", 12),rep("DS",13)), 
+            outcome=c(c(rep("Improvment",4 ),rep("Stationary",5), rep("Worsening",3)),
+                      c(rep("Improvment",8),rep("Stationary",4), rep("Worsening",1))))
 
-m<-multinom(outcome~treatment, data=d30)          
+      
+
+m30<-multinom(outcome~treatment, data=d30)      
+
+    
+
+m90<-multinom(outcome~treatment, data=d90)  
+
+
+
+
+
+
+tab_model(m30,emph.p=FALSE, show.intercept = FALSE, file="30d.html")
+tab_model(m90,emph.p=FALSE, show.intercept = FALSE, file="90d.html")
+
+  # 
+# 
+# 
+# 
+# 
+# p<-plot_model(m)
+# 
+# library(ggstance)
+# tt <- broom::tidy(m,conf.int=TRUE)
+# tt <- dplyr::filter(tt, term!="(Intercept)")
+# ggplot(tt, aes(x=estimate,y=term,colour=y.level))+
+#   geom_pointrangeh(aes(xmin=conf.low,
+#                        xmax=conf.high),
+#                    position=position_dodgev(height=0.75))
+# 
+# library(MASS)
+# utils::example(topic = birthwt, echo = FALSE)
+# 
+# # model
+# bwt.mu <-
+#   nnet::multinom(
+#     formula = low ~ .,
+#     data = bwt,
+#     trace = FALSE
+#   )
+
+
+
+
 
 
 ####Guarigione a 90 giorni###
@@ -90,21 +135,21 @@ m<-multinom(outcome~treatment, data=d90)
 
 
 ####bayes model####
-# fit <- brm(
-#   formula= outcome~treatment, data=d,
-#   family= categorical (link="logit"))
+fit <- brm(
+  formula= outcome~treatment, data=d30,
+  family= categorical (link="logit"))
 # 
-# x<-posterior_samples(fit)
-# mcmc_intervals(x)
-# mcmc_areas(
-#  x, 
-#  pars = c("b_muP_Intercept", "b_muS_Intercept", "b_muP_treatmentPD",
-#           "b_muS_treatmentPD"),
-#   prob = 0.8, # 80% intervals
-#   prob_outer = 0.99, # 99%
-#   point_est = "mean"
-# )
-# 
+x<-posterior_samples(fit)
+mcmc_intervals(x)
+mcmc_areas(
+ x,
+ pars = c("b_muP_Intercept", "b_muS_Intercept", "b_muP_treatmentPD",
+          "b_muS_treatmentPD"),
+  prob = 0.8, # 80% intervals
+  prob_outer = 0.99, # 99%
+  point_est = "mean"
+)
+
 # 
 # mcmc_areas_ridges(x)
 ######################################

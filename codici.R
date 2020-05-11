@@ -10,6 +10,7 @@ library(afex)
 library(patchwork)
 library(ggstatsplot)
 library(margins)
+library(ggeffects)
 
 dati <- read_excel("subsidenza.xlsx")  
 
@@ -70,60 +71,53 @@ plot_model(mod, type = "resid")
 
 #####Guarigione  a 30 gg#####  
 d30<-tibble(treatment=c(rep("PD", 12),rep("DS",13)), 
-          outcome=c(c(rep("Improvment",5 ),rep("Stationary",3), rep("Worsening",4)),
-                    c(rep("Improvment",11),rep("Stationary",1), rep("Worsening",1))))
+          outcome=c(c(rep("Improved",5 ),rep("Stable",3), rep("Worse",4)),
+                    c(rep("Improved",11),rep("Stable",1), rep("Worse",1))))
 
 ####Guarigione a >30giorni< 12 mesi###
 d90<-tibble(treatment=c(rep("PD", 12),rep("DS",13)), 
-            outcome=c(c(rep("Improvment",3),rep("Stationary",6), rep("Worsening",3)),
-                      c(rep("Improvment",8),rep("Stationary",2), rep("Worsening",3))))
+            outcome=c(c(rep("Improved",3),rep("Stable",6), rep("Worse",3)),
+                      c(rep("Improved",8),rep("Stable",2), rep("Worse",3))))
 
   
 ####Guarigione a >12 mesi###
 d12m<-tibble(treatment=c(rep("PD", 12),rep("DS",13)), 
-            outcome=c(c(rep("Improvment",4),rep("Stationary",5), rep("Worsening",3)),
-                      c(rep("Improvment",8),rep("Stationary",4), rep("Worsening",1))))
+            outcome=c(c(rep("Improved",4),rep("Stable",5), rep("Worse",3)),
+                      c(rep("Improved",8),rep("Stable",4), rep("Worse",1))))
 
 
 
 
     
-
-m30<-multinom(outcome~treatment, data=d30) # ref. improv
-
-d30$outcome<-relevel(as.factor(d30$outcome), ref = "Worsening")
-m30<-multinom(outcome~treatment, data=d30)
-
-m90<-multinom(outcome~treatment, data=d90)  
+# ref. improv
+m30<-multinom(outcome~treatment, data=d30) 
+m90<-multinom(outcome~treatment, data=d90)
 m12m<-multinom(outcome~treatment, data=d12m) 
 
 
 
-library(effects)
-plot(Effect("treatment",m30 ,multiline=T))
+###ref worse###
+d30$outcome<-relevel(as.factor(d30$outcome), ref = "Worse")
+d90$outcome<-relevel(as.factor(d90$outcome), ref = "Worse")
+d12m$outcome<-relevel(as.factor(d12m$outcome), ref = "Worse")
 
-eff<-Effect("treatment",m30)
+m30<-multinom(outcome~treatment, data=d30)
+m90<-multinom(outcome~treatment, data=d90) 
+m12m<-multinom(outcome~treatment, data=d12m) 
 
-
-eff<-ggemmeans(m30, "treatment")
-pred<-ggpredict(m30, "treatment")
-
-plot(eff)+coord_flip()
-
-
-ggstatsplot::ggcoefstats(
-  x = m90,
-  title = "multinomial logistic regression models",
-  package = "ggsci",
-  palette = "default_ucscgb",
-  exponentiate=TRUE,
-)+xlim(-50, 100)
+#grafici
+eff<-ggemmeans(m12m, "treatment")
+plot(eff)+labs(y="95%CI Outcome Probability", x="Treatment", title="")
 
 
 
-  tab_model(m30,emph.p=FALSE, show.intercept = FALSE, file="30d.html")
-  tab_model(m90,emph.p=FALSE, show.intercept = FALSE, file="90d.html")
-  tab_model(m12m,emph.p=FALSE, show.intercept = FALSE, file="m12d.html")
+
+
+
+
+  tab_model(m30,emph.p=FALSE, show.intercept = FALSE, file="30dw.html")
+  tab_model(m90,emph.p=FALSE, show.intercept = FALSE, file="90dw.html")
+  tab_model(m12m,emph.p=FALSE, show.intercept = FALSE, file="m12dw.html")
 
   # 
 # 

@@ -1,16 +1,18 @@
 library(readxl)
 library(tidyverse)
 library(nnet)   
-library(brms)
-library(bayesplot)
+# library(brms)
+# library(bayesplot)
 library(sjPlot)
 library(lme4)
-library(broom)
-library(afex)
-library(patchwork)
-library(ggstatsplot)
-library(margins)
+#library(broom)
+# library(afex)
+#library(patchwork)
+# library(ggstatsplot)
+# library(margins)
 library(ggeffects)
+#library(ggthemes)
+#library(hrbrthemes)
 
 dati <- read_excel("subsidenza.xlsx")  
 
@@ -38,8 +40,14 @@ tab_model(mod, show.intercept = FALSE, file="sub.html")
 
 tidy(mod)
 
-p<-plot_model(mod, type="re", colors = c("steelblue2", "steelblue2"))
+p<-plot_model(mod, type="re", colors = c("steelblue2", "steelblue2"))+
+  labs(title="Random effects (dog)")+geom_hline(yintercept=0)+
+ theme_gdocs()
+
+
+
 p2<-plot_model(mod, type="est", colors=c("steelblue2", "steelblue2"))
+labs(title="Fixed effects")
 
 p+p2
 
@@ -53,7 +61,7 @@ dati %>%
   geom_point(aes(color=tecnica), size=2.8)+ scale_color_manual(values=c("blue", "red"))+
   geom_segment(aes(x = conf.low, xend = conf.high, y=dogs, yend=dogs,
                    color=tecnica))+theme_sjplot()+
-  vline_0(color="grey3")+labs(title="random effect", x="diff", y="")+
+  labs(title="random effect", x="diff", y="")+
   geom_text(vjust=-1)
 
 tab_model(mod, file="m.html")
@@ -106,7 +114,7 @@ m90<-multinom(outcome~treatment, data=d90)
 m12m<-multinom(outcome~treatment, data=d12m) 
 
 #grafici
-eff<-ggemmeans(m12m, "treatment")
+eff<-ggemmeans(m30, "treatment")
 plot(eff)+labs(y="95%CI Outcome Probability", x="Treatment", title="")
 
 
@@ -119,7 +127,7 @@ plot(eff)+labs(y="95%CI Outcome Probability", x="Treatment", title="")
   tab_model(m90,emph.p=FALSE, show.intercept = FALSE, file="90dw.html")
   tab_model(m12m,emph.p=FALSE, show.intercept = FALSE, file="m12dw.html")
 
-  # 
+    # 
 # 
 # 
 # 
